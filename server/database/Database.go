@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 
@@ -23,6 +25,11 @@ type Credentials struct {
 	Password string `json:"Password" db:"Password"`
 }
 
+//Query struct for parsing incomig queries
+type Query struct {
+	QueryString string `json:"Query"`
+}
+
 //Database is a basic database struct to encapsulate functions
 type Database struct {
 	db *sqlx.DB
@@ -33,6 +40,52 @@ var createUsersTableStmt = `
 		Username			TEXT,
 		PasswordHash		TEXT
 	)
+`
+var createSortedAnagramTableStmt = `
+	CREATE TABLE IF NOT EXISTS SortedAnagrams(
+		sorted_id				SERIAL,
+		Sorted	TEXT,
+		PRIMARY KEY (id)
+	)
+`
+
+var createAnagramTableStmt = `
+	CREATE TABLE IF NOT EXISTS Anagrams(
+		anagrams_id				SERIAL,
+		sorted_id		int NOT NULL,
+		Anagram			TEXT,
+		PRIMARY KEY (anagrams_id),
+		FOREIGN KEY (sorted_id) REFERENCES SortedAnagrams(sorted_id) ON DELETE CASCADE
+	)
+`
+
+var getAnagramStmt = `
+	SELECT id FROM Anagrams WHERE Anagram = $1
+`
+
+var insertAnagramStmt = `
+	INSERT INTO Anagrams (sorted_id, Anagram) VALUES ($1, $2)
+`
+
+var insertSortedAnagramStmt = `
+	INSERT INTO SortedAnagrams (Sorted) VALUES ($1) RETURNING id
+`
+
+var getSortedAnagramStmt = `
+	SELECT id FROM SortedAnagrams WHERE Sorted = $1
+`
+
+var getQueryAnagramStmt = `
+	SELECT DISTINCT Anagrams.Anagram
+	FROM SortedAnagrams
+	LEFT JOIN Anagrams
+	ON (
+		SELECT sorted_id FROM SortedAnagrams WHERE Sorted=$1
+	) = Anagrams.sorted_id
+`
+
+var getAllAnagramsStmt = `
+	SELECT DISTINCT Anagram FROM Anagrams
 `
 
 var insertUserStmt = `
@@ -79,6 +132,14 @@ func CreateDB() (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
+	_, err = db.Exec(createAnagramTableStmt)
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Exec(createSortedAnagramTableStmt)
+	if err != nil {
+		return nil, err
+	}
 	var d Database
 	d.db = db
 	return &d, nil
@@ -121,4 +182,74 @@ func (d *Database) CheckUser(c Credentials) error {
 		return err
 	}
 	return nil
+}
+
+//InsertAnagram checks anagram existence in the database and inserts in case it doesn't exist
+func (d *Database) InsertAnagram(a string) error {
+	sorted := d.sortAnagram(a)
+	var sortedID int
+	rows, err := d.db.Query(getSortedAnagramStmt, sorted)
+	if err != nil {
+		return err
+	}
+	if rows.Next() {
+		rows.Scan(&sortedID)
+	} else {
+		sortedID, err = d.insertSortedAnagram(sorted)
+		if err != nil {
+			return err
+		}
+	}
+
+	rows, err = d.db.Query(getAnagramStmt, a)
+	if err != nil {
+		return err
+	}
+	if rows.Next() {
+		return fmt.Errorf(`Anagram %v already exists in the database`, a)
+	}
+	_, err = d.db.Exec(insertAnagramStmt, sortedID, a)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//RetrieveQueryAnagram retrieves all anagrams for an incoming string from database
+func (d *Database) RetrieveQueryAnagram(a string) ([]string, error) {
+	sorted := d.sortAnagram(a)
+	anagrams := make([]string, 0)
+	err := d.db.Get(&anagrams, getQueryAnagramStmt, sorted)
+	if err != nil {
+		return anagrams, err
+	}
+	return anagrams, nil
+}
+
+//RetrieveAllAnagrams retrieves all anagrams from database
+func (d *Database) RetrieveAllAnagrams() ([]string, error) {
+	anagrams := make([]string, 0)
+	err := d.db.Get(&anagrams, getAllAnagramsStmt)
+	if err != nil {
+		return anagrams, err
+	}
+	return anagrams, nil
+}
+
+func (d *Database) sortAnagram(a string) string {
+	t := strings.Split(a, "")
+	sort.Strings(t)
+	return strings.Join(t, "")
+}
+
+func (d *Database) insertSortedAnagram(a string) (int, error) {
+	rows, err := d.db.Query(insertSortedAnagramStmt, a)
+	if err != nil {
+		return 0, err
+	}
+	var id int
+	if rows.Next() {
+		rows.Scan(&id)
+	}
+	return id, nil
 }

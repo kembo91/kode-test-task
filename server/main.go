@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/kembo91/kode-test-task/server/handlers/userauth"
-
 	"github.com/kembo91/kode-test-task/server/database"
+	"github.com/kembo91/kode-test-task/server/handlers/anagram"
+	"github.com/kembo91/kode-test-task/server/handlers/userauth"
 
 	h "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -32,9 +32,12 @@ func main() {
 	api.HandleFunc("/login", userauth.SigninHandler(db)).Methods("POST")
 	api.HandleFunc("/signup", userauth.SignupHandler(db)).Methods("POST")
 
-	anagramm := api.PathPrefix("/anagramm").Subrouter()
+	anagrapi := api.PathPrefix("/anagram").Subrouter()
+	anagrapi.Use(userauth.AuthenticationMiddleware)
 
-	anagramm.Use(userauth.AuthenticationMiddleware)
+	anagrapi.HandleFunc("/insert", anagram.InsertAnagram(db)).Methods("POST")
+	anagrapi.HandleFunc("/retrieve", anagram.RetrieveAnagram(db)).Methods("POST")
+	anagrapi.HandleFunc("/retrieve", anagram.RetrieveAll(db)).Methods("GET")
 
 	srv := http.Server{
 		Handler:      h.LoggingHandler(os.Stdout, r),

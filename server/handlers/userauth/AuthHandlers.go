@@ -85,6 +85,12 @@ func SigninHandler(db *database.Database) func(w http.ResponseWriter, r *http.Re
 	}
 }
 
+func LogoutHandler(db *database.Database) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
 func setJWT(w http.ResponseWriter, u string) {
 	expTime := time.Now().Add(10 * time.Minute)
 	claims := &Claims{
