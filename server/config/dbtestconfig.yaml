@@ -1,0 +1,3 @@
+dbname: "test"
+user: "postgres"
+password: "postgres"
