@@ -13,8 +13,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtSecret = []byte("storing_secret_like_this_is_wrong")
-
 //Claims jwt claims struct
 type Claims struct {
 	Username string `json:"username"`
@@ -25,7 +23,6 @@ type Claims struct {
 func AuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("token")
-
 		switch err {
 		case http.ErrNoCookie:
 			err = fmt.Errorf("Authorization required. Go to /api/signin or /api/signup")
@@ -39,6 +36,12 @@ func AuthenticationMiddleware(next http.Handler) http.Handler {
 		}
 		tokenString := c.Value
 		claims := &Claims{}
+		jwtSecret, err := utils.GetJWTSecret()
+		if err != nil {
+			err = fmt.Errorf("Can't obtain secret key")
+			utils.JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
 		tkn, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
@@ -120,6 +123,12 @@ func setJWT(w http.ResponseWriter, u string, valid bool) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwtSecret, err := utils.GetJWTSecret()
+	if err != nil {
+		err = fmt.Errorf("Can't obtain secret key")
+		utils.JSONError(w, err, http.StatusInternalServerError)
+		return
+	}
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
 		utils.JSONError(w, err, http.StatusInternalServerError)
@@ -127,6 +136,7 @@ func setJWT(w http.ResponseWriter, u string, valid bool) {
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:    "token",
+		Path:    "/api",
 		Value:   tokenString,
 		Expires: expTime,
 	})

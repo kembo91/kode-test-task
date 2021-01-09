@@ -10,6 +10,9 @@ var isAnagramStmt = regexp.MustCompile(`^[a-z]+$`).MatchString
 
 //IsValidUsername checks if username is valid
 func IsValidUsername(s string) error {
+	if len(s) < 5 {
+		return fmt.Errorf("username must be at least 5 characters long")
+	}
 	if !isUsernameStmt(s) {
 		return fmt.Errorf(`username can contain only alphabetic letters, numbers, or _ - . symbols`)
 	}

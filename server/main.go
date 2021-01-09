@@ -15,8 +15,9 @@ import (
 	h "github.com/gorilla/handlers"
 )
 
+var cfgPath = "../../config/dbconfig.yaml"
+
 func main() {
-	cfgPath := "../../config/dbconfig.yaml"
 	cfg := utils.GetDBConfig(cfgPath)
 	db, err := database.CreateDB("postgres", cfg)
 	if err != nil {
