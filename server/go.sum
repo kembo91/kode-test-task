@@ -18,6 +18,7 @@ github.com/kembo91/kode-test-task v0.0.0-20201226182155-36c1023b3d76 h1:47DEQpj8
 github.com/kembo91/kode-test-task v0.0.0-20210104112619-8cc8706617b4 h1:m6Cc0tuzqZq4sWHre7FFzdF11ZsmSq+rP57fYpc2ICg=
 github.com/kembo91/kode-test-task v0.0.0-20210107165756-545b92dc8673 h1:EXiclJTqHVNhFxWjD9ltG3qfgTaBqDykJl3A4cl3Tiw=
 github.com/kembo91/kode-test-task v0.0.0-20210108125818-827e00bb68fb h1:wInPCtC85KY6ujzVKFI8OXCM1eTWxtrM02RhAEfDn7A=
+github.com/kembo91/kode-test-task v0.0.0-20210110153454-b7df99f61e5c h1:xIcsgrpBYhvSEJfDTJpEKGqzHnL1+XdDmutK5nLpQIE=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/lib/pq v1.0.0 h1:X5PMW56eZitiTeO7tKzZxFCSpbFZJtkMMooicw2us9A=
