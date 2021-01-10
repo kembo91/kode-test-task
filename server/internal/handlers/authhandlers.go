@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -17,6 +18,16 @@ import (
 type Claims struct {
 	Username string `json:"username"`
 	jwt.StandardClaims
+}
+
+var jwtSecret []byte
+
+func init() {
+	jwt, err := utils.GetJWTSecret()
+	if err != nil {
+		log.Fatal(err)
+	}
+	jwtSecret = jwt
 }
 
 //AuthenticationMiddleware checks if a request is from a logged in user
@@ -36,12 +47,6 @@ func AuthenticationMiddleware(next http.Handler) http.Handler {
 		}
 		tokenString := c.Value
 		claims := &Claims{}
-		jwtSecret, err := utils.GetJWTSecret()
-		if err != nil {
-			err = fmt.Errorf("Can't obtain secret key")
-			utils.JSONError(w, err, http.StatusInternalServerError)
-			return
-		}
 		tkn, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
@@ -81,6 +86,7 @@ func SignupHandler(db *database.Database) func(w http.ResponseWriter, r *http.Re
 			return
 		}
 		setJWT(w, u.Username, true)
+		utils.JSONSuccess(w)
 	}
 }
 
@@ -99,14 +105,14 @@ func SigninHandler(db *database.Database) func(w http.ResponseWriter, r *http.Re
 			return
 		}
 		setJWT(w, u.Username, true)
+		utils.JSONSuccess(w)
 	}
 }
 
-//LogoutHandler handles logout requests by providing an expired token as a response
-func LogoutHandler(db *database.Database) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-	}
+//SignoutHandler handles logout requests by providing an expired token as a response
+func SignoutHandler(w http.ResponseWriter, r *http.Request) {
+	setJWT(w, "random", false)
+	utils.JSONSuccess(w)
 }
 
 func setJWT(w http.ResponseWriter, u string, valid bool) {
@@ -123,12 +129,6 @@ func setJWT(w http.ResponseWriter, u string, valid bool) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	jwtSecret, err := utils.GetJWTSecret()
-	if err != nil {
-		err = fmt.Errorf("Can't obtain secret key")
-		utils.JSONError(w, err, http.StatusInternalServerError)
-		return
-	}
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
 		utils.JSONError(w, err, http.StatusInternalServerError)

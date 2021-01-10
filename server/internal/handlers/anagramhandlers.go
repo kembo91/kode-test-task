@@ -30,7 +30,7 @@ func InsertAnagram(db *database.Database) func(w http.ResponseWriter, r *http.Re
 			utils.JSONError(w, err, http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
+		utils.JSONSuccess(w)
 	}
 }
 
@@ -61,12 +61,6 @@ func RetrieveAnagram(db *database.Database) func(w http.ResponseWriter, r *http.
 //RetrieveAll handles all anagrams retrieval request
 func RetrieveAll(db *database.Database) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var q database.Query
-		err := json.NewDecoder(r.Body).Decode(&q)
-		if err != nil {
-			utils.JSONError(w, err, http.StatusBadRequest)
-			return
-		}
 		anagrams, err := db.RetrieveAllAnagrams()
 		if err != nil {
 			utils.JSONError(w, err, http.StatusInternalServerError)

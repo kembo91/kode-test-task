@@ -16,6 +16,7 @@ func CreateRouter(db *database.Database) *mux.Router {
 
 	api.HandleFunc("/signin", handlers.SigninHandler(db)).Methods("POST")
 	api.HandleFunc("/signup", handlers.SignupHandler(db)).Methods("POST")
+	api.HandleFunc("/signout", handlers.SignoutHandler).Methods("GET")
 
 	anagrapi := api.PathPrefix("/anagram").Subrouter()
 	anagrapi.Use(handlers.AuthenticationMiddleware)

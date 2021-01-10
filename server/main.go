@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,10 +16,8 @@ import (
 	h "github.com/gorilla/handlers"
 )
 
-var cfgPath = "../../config/dbconfig.yaml"
-
 func main() {
-	cfg := utils.GetDBConfig(cfgPath)
+	cfg := utils.GetDBConfig()
 	db, err := database.CreateDB("postgres", cfg)
 	if err != nil {
 		log.Fatal(err)
@@ -30,5 +29,6 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+	fmt.Println("Now listening on port 8080")
 	srv.ListenAndServe()
 }

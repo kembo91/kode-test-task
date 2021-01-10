@@ -2,6 +2,8 @@ package database
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/kembo91/kode-test-task/server/internal/utils"
 
@@ -42,10 +44,12 @@ var createAnagramTableStmt = `
 
 //CreateDB creates a database and sets up tables if they don't exist
 func CreateDB(driver string, cfg utils.DBConfig) (*Database, error) {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable host=postgres", cfg.DBUser, cfg.DBPassword, cfg.DBName)
 	db, err := sqlx.Connect(driver, dbinfo)
 	if err != nil {
-		return nil, err
+		log.Printf(`Can't open database, retrying. error : %v`, err.Error())
+		time.Sleep(5 * time.Second)
+		return CreateDB(driver, cfg)
 	}
 	_, err = db.Exec(createUsersTableStmt)
 	if err != nil {

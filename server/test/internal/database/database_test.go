@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var cfg = utils.GetDBConfig("../../../config/dbtestconfig.yaml")
+var cfg = utils.GetDBTestConfig()
 var db = createTestingDb(cfg)
 
 func createTestingDb(cfg utils.DBConfig) *database.Database {

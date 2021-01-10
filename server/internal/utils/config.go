@@ -18,10 +18,36 @@ type jwtSecret struct {
 	secret string `yaml:"jwt_secret"`
 }
 
+var dbcfgPath = "../../config/dbconfig.yaml"
+var dbcfgBuildPath = "./config/dbconfig.yaml"
+
+var jwtSecretPath = "../../config/jwt_secret.yaml"
+var jwtSecretBuildPath = "./config/jwt_secret.yaml"
+
 //GetDBConfig parses database config information
-func GetDBConfig(path string) DBConfig {
+func GetDBConfig() DBConfig {
 	var c DBConfig
-	yamlFile, err := ioutil.ReadFile(path)
+	var yamlFile []byte
+	yamlFile, err := ioutil.ReadFile(dbcfgPath)
+	if err != nil {
+		yamlFile, err = ioutil.ReadFile(dbcfgBuildPath)
+		if err != nil {
+			log.Fatal("Can't load config file")
+		}
+	}
+	err = yaml.Unmarshal(yamlFile, &c)
+	if err != nil {
+		log.Fatal("Can't load config file")
+	}
+	return c
+}
+
+//GetDBTestConfig parses a config file for testing purposes
+//there is a better way to do it than this
+func GetDBTestConfig() DBConfig {
+	var c DBConfig
+	var yamlFile []byte
+	yamlFile, err := ioutil.ReadFile("../../../config/dbtestconfig.yaml")
 	if err != nil {
 		log.Fatal("Can't load config file")
 	}
@@ -34,11 +60,14 @@ func GetDBConfig(path string) DBConfig {
 
 //GetJWTSecret provides with jwt secret key
 func GetJWTSecret() ([]byte, error) {
-	path := "../../config/jwt_secret.yaml"
 	var c jwtSecret
-	yamlFile, err := ioutil.ReadFile(path)
+	var yamlFile []byte
+	yamlFile, err := ioutil.ReadFile(jwtSecretPath)
 	if err != nil {
-		return []byte{}, err
+		yamlFile, err = ioutil.ReadFile(jwtSecretBuildPath)
+		if err != nil {
+			return []byte{}, err
+		}
 	}
 	err = yaml.Unmarshal(yamlFile, &c)
 	if err != nil {
